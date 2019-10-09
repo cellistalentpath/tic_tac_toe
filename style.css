@@ -1,0 +1,49 @@
+body {
+	background: blue;
+}
+
+#tictactoe {
+	position: relative;
+	text-align: center;
+	font-size: 60px;
+	bottom: 50px;
+}
+
+#tic_tac_holder {
+	border: 3px solid black;
+	height: 501px;
+	width: 501px;
+	display: inline-block;
+	padding: 5px 5px 5px 5px;
+	background: orange;
+}
+
+#tic_tac_holder :hover {
+	background: yellow;
+}
+
+.squares {
+	height: 32%;
+	width: 32%;
+	border: 1px solid black;
+	float: left;
+	padding: 2px;
+	line-height:2.5;
+}
+
+#resetButton {
+	display: inline-block;
+	height: 50px;
+	width: 70px;
+}
+
+#points {
+	position: relative;
+	top: 250px;
+	left: 75px;
+	width: 200px;
+	border: 1px solid black;
+	background: white;
+	font-size: 20px;
+	padding: 4px;
+}
