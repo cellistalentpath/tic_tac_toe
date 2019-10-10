@@ -68,3 +68,12 @@ body {
 	padding: 4px;
 	text-align: center;
 }
+
+#gameDifficultyButton {
+	position: absolute;
+	display: inline-block;
+	height: 50px;
+	width: 140px;
+	top: 400px;
+	left: 105px;
+}
