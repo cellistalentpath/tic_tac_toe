@@ -3,10 +3,11 @@ body {
 }
 
 #tictactoe {
-	position: relative;
+	position: absolute;
 	text-align: center;
 	font-size: 60px;
-	bottom: 50px;
+	top: 50px;
+	left: 400px;
 }
 
 #tic_tac_holder {
@@ -15,11 +16,7 @@ body {
 	width: 501px;
 	display: inline-block;
 	padding: 5px 5px 5px 5px;
-	background: orange;
-}
-
-#tic_tac_holder :hover {
-	background: yellow;
+	background-color: orange;
 }
 
 .squares {
@@ -28,18 +25,21 @@ body {
 	border: 1px solid black;
 	float: left;
 	padding: 2px;
-	line-height:2.5;
+	line-height: 2.5;
 }
 
 #resetButton {
+	position: absolute;
 	display: inline-block;
 	height: 50px;
 	width: 70px;
+	top: 200px;
+	left: 140px;
 }
 
 #points {
-	position: relative;
-	top: 250px;
+	position: absolute;
+	top: 275px;
 	left: 75px;
 	width: 200px;
 	border: 1px solid black;

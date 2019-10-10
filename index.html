@@ -3,10 +3,12 @@
 	<head>
 		<link rel="stylesheet" href="style.css" />
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
-		<script src="tic_tac_logic.js"></script> 
+		<script src="tic_tac_logic.js"></script>
 	</head>
 	<body>
-		<div>		<button id="resetButton" onclick="myReset()">Reset</button></div>
+		<div>
+			<button id="resetButton" onclick="myReset()">Reset</button>
+		</div>
 		<div id="points">
 			<div id="p1points">Player One points: 0</div>
 			<div id="p2points">Player Two points: 0</div>
@@ -19,6 +21,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="top_center"
@@ -26,6 +32,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="top_right"
@@ -33,6 +43,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="middle_left"
@@ -40,6 +54,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="middle_center"
@@ -47,6 +65,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="middle_right"
@@ -54,6 +76,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="bottom_left"
@@ -61,6 +87,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="bottom_center"
@@ -68,6 +98,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 				<div
 					id="bottom_right"
@@ -75,6 +109,10 @@
 					class="squares"
 					,
 					onclick="fillTheSquare(id)"
+					,
+					onmouseover="bgChange(id, 'yellow')"
+					,
+					onmouseout="bgChange(id, 'orange')"
 				></div>
 			</div>
 		</div>

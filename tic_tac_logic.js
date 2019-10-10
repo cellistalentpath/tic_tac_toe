@@ -47,6 +47,45 @@ class Player {
 	}
 }
 
+const ticTacDict = [
+	{
+		squareName: "top_left",
+		squareNumber: 0
+	},
+	{
+		squareName: "top_center",
+		squareNumber: 1
+	},
+	{
+		squareName: "top_right",
+		squareNumber: 2
+	},
+	{
+		squareName: "middle_left",
+		squareNumber: 3
+	},
+	{
+		squareName: "middle_center",
+		squareNumber: 4
+	},
+	{
+		squareName: "middle_right",
+		squareNumber: 5
+	},
+	{
+		squareName: "bottom_left",
+		squareNumber: 6
+	},
+	{
+		squareName: "bottom_center",
+		squareNumber: 7
+	},
+	{
+		squareName: "bottom_right",
+		squareNumber: 8
+	}
+];
+
 let turnCounter = 0;
 let isGameOver = false;
 let p1points = 0;
@@ -75,6 +114,20 @@ gameOver = function(player) {
 	}
 	isGameOver = true;
 };
+// This will fill a random square with O, might need to make sure it does not run after game is over
+runAI = function() {
+	const choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+	while (document.getElementById(choice) === "O") {
+		choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+	}
+	document.getElementById(choice).innerHTML = "O";
+};
+
+function bgChange(id, color) {
+	if (document.getElementById(id).style.backgroundColor != "red") {
+		document.getElementById(id).style.background = color;
+	}
+}
 
 myReset = function() {
 	turnCounter = 0;
@@ -82,6 +135,7 @@ myReset = function() {
 	isGameOver = false;
 	let test = document.getElementsByClassName("squares");
 	// Change all squares back to orange
+	// Prevents highlighting for some reason
 	for (i = 0; i < test.length; i++) {
 		test[i].style.backgroundColor = "orange";
 	}
@@ -123,7 +177,6 @@ checkForGameOver = function(square, player) {
 					document.getElementById(square).innerHTML ===
 						document.getElementById("top_right").innerHTML
 				) {
-					// Highlight winning boxes with red
 					document.getElementById("top_left").style.backgroundColor = "red";
 					document.getElementById("top_center").style.backgroundColor = "red";
 					document.getElementById("top_right").style.backgroundColor = "red";
