@@ -47,6 +47,7 @@ class Player {
 	}
 }
 
+// Used for selecting a random spot when AI has no easy choice
 const ticTacDict = [
 	{
 		squareName: "top_left",
@@ -90,45 +91,36 @@ let turnCounter = 0;
 let isGameOver = false;
 let p1points = 0;
 let p2points = 0;
-const gameBoard = new Board();
+let gameMode = "Single Player";
+let lastAIChoice = "";
+let isAIThinking = false;
 
+const gameBoard = new Board();
 const playerOne = new Player("Player One", 0); //Will always have Xs
 const playerTwo = new Player("Player Two", 0); //Will always have Os
+const aiPlayer = new Player("The AI", 0);
 
 let currentPlayer = playerOne;
 
-gameOver = function(player) {
-	if (player === "tie") {
-		Swal.fire("Game Over!", "The game has resulted in a tie!", "success");
+// Changes button text when game mode changes
+function changeGameMode() {
+	if (gameMode === "Single Player") {
+		gameMode = "Two Player";
+		document.getElementById("gameModeButton").innerHTML = "Two Player";
 	} else {
-		Swal.fire("Game Over!", player.name + " has won!", "success");
-		if (player === playerOne) {
-			p1points++;
-		} else {
-			p2points++;
-		}
-		document.getElementById("p1points").innerHTML =
-			"Player One points: " + p1points;
-		document.getElementById("p2points").innerHTML =
-			"Player Two points: " + p2points;
+		gameMode = "Single Player";
+		document.getElementById("gameModeButton").innerHTML = "Single Player";
 	}
-	isGameOver = true;
-};
-// This will fill a random square with O, might need to make sure it does not run after game is over
-runAI = function() {
-	const choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
-	while (document.getElementById(choice) === "O") {
-		choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
-	}
-	document.getElementById(choice).innerHTML = "O";
-};
+}
 
+// Change background on hover execpt when the win is highlighted
 function bgChange(id, color) {
 	if (document.getElementById(id).style.backgroundColor != "red") {
 		document.getElementById(id).style.background = color;
 	}
 }
 
+// Reset the board
 myReset = function() {
 	turnCounter = 0;
 	gameBoard.clear();
@@ -141,24 +133,735 @@ myReset = function() {
 	}
 };
 
+// Main game function
+// Fill in selected square with X or O
 fillTheSquare = function(square) {
+	// Prevent filling if a square is already occupied
 	if (document.getElementById(square).innerHTML === "") {
-		if (currentPlayer === playerOne) {
+		if (gameMode === "Two Player") {
+			if (currentPlayer === playerOne) {
+				gameBoard.fillSquareX(square);
+				turnCounter++;
+				checkForGameOver(square, playerOne);
+				currentPlayer = playerTwo;
+				if (turnCounter >= 9 && isGameOver === false) {
+					gameOver("tie");
+				}
+			} else if (currentPlayer === playerTwo) {
+				gameBoard.fillSquareO(square);
+				turnCounter++;
+				checkForGameOver(square, playerTwo);
+				if (turnCounter >= 9 && isGameOver === false) {
+					gameOver("tie");
+				}
+				currentPlayer = playerOne;
+			}
+		} else if (isAIThinking === false && isGameOver === false) {
 			gameBoard.fillSquareX(square);
 			turnCounter++;
 			checkForGameOver(square, playerOne);
-			currentPlayer = playerTwo;
 			if (turnCounter >= 9 && isGameOver === false) {
 				gameOver("tie");
 			}
-		} else if (currentPlayer === playerTwo) {
-			gameBoard.fillSquareO(square);
-			turnCounter++;
-			checkForGameOver(square, playerTwo);
-			if (turnCounter >= 9 && isGameOver === false) {
-				gameOver("tie");
+			// Begin AI process
+			isAIThinking = true;
+			let aiAction = document.getElementById("whatIsAIDoing");
+			aiAction.innerHTML = "AI is thinking...";
+			aiAction.style.backgroundColor = "red";
+			aiAction.style.color = "white";
+			setTimeout(function() {
+				runAI(square, lastAIChoice);
+				isAIThinking = false;
+				aiAction.innerHTML = "AI is waiting";
+				aiAction.style.backgroundColor = "white";
+				aiAction.style.color = "black";
+			}, 1000);
+		}
+	}
+};
+
+// Fire game over message and update points
+gameOver = function(player) {
+	if (player === "tie") {
+		Swal.fire("Game Over!", "The game has resulted in a tie!", "success");
+	} else {
+		Swal.fire("Game Over!", player.name + " has won!", "success");
+		if (player === playerOne) {
+			p1points++;
+		} else {
+			p2points++;
+		}
+	}
+	document.getElementById("p1points").innerHTML =
+		"Player One points: " + p1points;
+	document.getElementById("p2points").innerHTML =
+		"Player Two points: " + p2points;
+	isGameOver = true;
+};
+
+// Main logic for AI
+runAI = function(playerPickedSquare, prevAIChoice) {
+	if (isGameOver === false) {
+		let choice = "";
+
+		// Use common tactics to prevent winning on second turn
+		if (turnCounter === 1 && playerPickedSquare != "middle_center") {
+			choice = "middle_center";
+		} else if (turnCounter === 1) {
+			choice = "top_right";
+		}
+
+		// AI will try to win, then block, otherwise it is random
+		switch (prevAIChoice) {
+			case "top_left":
+				// CHECKING FOR ROW WINS
+				if (
+					document.getElementById("top_center").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("top_center").innerHTML === ""
+				) {
+					choice = "top_center";
+					// CHECKING FOR COLUMN WINS
+				} else if (
+					document.getElementById("middle_left").innerHTML === "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+				} else if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("middle_left").innerHTML === ""
+				) {
+					choice = "middle_left";
+					// CHECKING FOR DIAGONAL WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+			case "top_center":
+				// CHECK FOR ROW WINS
+				if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+					// CHECK FOR COLUMN WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("bottom_center").innerHTML === ""
+				) {
+					choice = "bottom_center";
+				} else if (
+					document.getElementById("bottom_center").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+			case "top_right":
+				// CHECK ROW WINS
+				if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("top_center").innerHTML === ""
+				) {
+					choice = "top_center";
+				} else if (
+					document.getElementById("top_center").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+					// CHECK COLUMN WINS
+				} else if (
+					document.getElementById("middle_right").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("middle_right").innerHTML === ""
+				) {
+					choice = "middle_right";
+					// CHECKING FOR DIAGONAL WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+				} else if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+			case "middle_left":
+				// CHECK ROW WINS
+				if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("middle_right").innerHTML === ""
+				) {
+					choice = "middle_right";
+				} else if (
+					document.getElementById("middle_right").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+					//CHECK COLUMN WINS
+				} else if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+				} else if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+				} else {
+					break;
+				}
+				break;
+			case "middle_center":
+				// CHECK ROW WINS
+				if (
+					document.getElementById("middle_left").innerHTML === "O" &&
+					document.getElementById("middle_right").innerHTML === ""
+				) {
+					choice = "middle_right";
+				} else if (
+					document.getElementById("middle_right").innerHTML === "O" &&
+					document.getElementById("middle_left").innerHTML === ""
+				) {
+					choice = "middle_left";
+					// CHECK COLUMN WINS
+				} else if (
+					document.getElementById("top_center").innerHTML === "O" &&
+					document.getElementById("bottom_center").innerHTML === ""
+				) {
+					choice = "bottom_center";
+				} else if (
+					document.getElementById("bottom_center").innerHTML === "O" &&
+					document.getElementById("top_center").innerHTML === ""
+				) {
+					choice = "top_center";
+					// CHECKING FOR DIAGONAL WINS
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+				} else if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+				} else if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+				} else {
+					break;
+				}
+				break;
+			case "middle_right":
+				// CHECK ROW WINS
+				if (
+					document.getElementById("middle_left").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("middle_left").innerHTML === ""
+				) {
+					choice = "middle_left";
+					// CHECK COLUMN WINS
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+				} else {
+					break;
+				}
+				break;
+			case "bottom_left":
+				// CHECK ROW WINS
+				if (
+					document.getElementById("bottom_center").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("bottom_center").innerHTML === ""
+				) {
+					choice = "bottom_center";
+					// CHECK COLUMN WINS
+				} else if (
+					document.getElementById("middle_left").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+				} else if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("middle_left").innerHTML === ""
+				) {
+					choice = "middle_left";
+					// CHECKING FOR DIAGONAL WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+			case "bottom_center":
+				// CHECK ROW FOR WINS
+				if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("bottom_right").innerHTML === ""
+				) {
+					choice = "bottom_right";
+				} else if (
+					document.getElementById("bottom_right").innerHTML === "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+					// CHECK COLUMN FOR WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("top_center").innerHTML === ""
+				) {
+					choice = "top_center";
+				} else if (
+					document.getElementById("top_center").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+			case "bottom_right":
+				// CHECK ROW FOR WINS
+				if (
+					document.getElementById("bottom_left").innerHTML === "O" &&
+					document.getElementById("bottom_center").innerHTML === ""
+				) {
+					choice = "bottom_center";
+				} else if (
+					document.getElementById("bottom_center").innerHTML == "O" &&
+					document.getElementById("bottom_left").innerHTML === ""
+				) {
+					choice = "bottom_left";
+					// CHECK COLUMN FOR WINS
+				} else if (
+					document.getElementById("top_right").innerHTML === "O" &&
+					document.getElementById("middle_right").innerHTML === ""
+				) {
+					choice = "middle_right";
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("top_right").innerHTML === ""
+				) {
+					choice = "top_right";
+					// CHECKING FOR DIAGONAL WINS
+				} else if (
+					document.getElementById("middle_center").innerHTML === "O" &&
+					document.getElementById("top_left").innerHTML === ""
+				) {
+					choice = "top_left";
+				} else if (
+					document.getElementById("top_left").innerHTML === "O" &&
+					document.getElementById("middle_center").innerHTML === ""
+				) {
+					choice = "middle_center";
+				} else {
+					break;
+				}
+				break;
+		}
+
+		if (choice === "") {
+			choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+			switch (playerPickedSquare) {
+				// Use last box clicked to check for possible wins
+				case "top_left":
+					// CHECKING FOR ROW WINS
+					if (
+						document.getElementById("top_center").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("top_center").innerHTML === ""
+					) {
+						choice = "top_center";
+						// CHECKING FOR COLUMN WINS
+					} else if (
+						document.getElementById("middle_left").innerHTML === "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+					} else if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("middle_left").innerHTML === ""
+					) {
+						choice = "middle_left";
+						// CHECKING FOR DIAGONAL WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "top_center":
+					// CHECK FOR ROW WINS
+					if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+						// CHECK FOR COLUMN WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("bottom_center").innerHTML === ""
+					) {
+						choice = "bottom_center";
+					} else if (
+						document.getElementById("bottom_center").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "top_right":
+					// CHECK ROW WINS
+					if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("top_center").innerHTML === ""
+					) {
+						choice = "top_center";
+					} else if (
+						document.getElementById("top_center").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+						// CHECK COLUMN WINS
+					} else if (
+						document.getElementById("middle_right").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("middle_right").innerHTML === ""
+					) {
+						choice = "middle_right";
+						// CHECKING FOR DIAGONAL WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+					} else if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "middle_left":
+					// CHECK ROW WINS
+					if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("middle_right").innerHTML === ""
+					) {
+						choice = "middle_right";
+					} else if (
+						document.getElementById("middle_right").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+						//CHECK COLUMN WINS
+					} else if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+					} else if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "middle_center":
+					// CHECK ROW WINS
+					if (
+						document.getElementById("middle_left").innerHTML === "X" &&
+						document.getElementById("middle_right").innerHTML === ""
+					) {
+						choice = "middle_right";
+					} else if (
+						document.getElementById("middle_right").innerHTML === "X" &&
+						document.getElementById("middle_left").innerHTML === ""
+					) {
+						choice = "middle_left";
+						// CHECK COLUMN WINS
+					} else if (
+						document.getElementById("top_center").innerHTML === "X" &&
+						document.getElementById("bottom_center").innerHTML === ""
+					) {
+						choice = "bottom_center";
+					} else if (
+						document.getElementById("bottom_center").innerHTML === "X" &&
+						document.getElementById("top_center").innerHTML === ""
+					) {
+						choice = "top_center";
+						// CHECKING FOR DIAGONAL WINS
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+					} else if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+					} else if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "middle_right":
+					// CHECK ROW WINS
+					if (
+						document.getElementById("middle_left").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("middle_left").innerHTML === ""
+					) {
+						choice = "middle_left";
+						// CHECK COLUMN WINS
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "bottom_left":
+					// CHECK ROW WINS
+					if (
+						document.getElementById("bottom_center").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("bottom_center").innerHTML === ""
+					) {
+						choice = "bottom_center";
+						// CHECK COLUMN WINS
+					} else if (
+						document.getElementById("middle_left").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+					} else if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("middle_left").innerHTML === ""
+					) {
+						choice = "middle_left";
+						// CHECKING FOR DIAGONAL WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "bottom_center":
+					// CHECK ROW FOR WINS
+					if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("bottom_right").innerHTML === ""
+					) {
+						choice = "bottom_right";
+					} else if (
+						document.getElementById("bottom_right").innerHTML === "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+						// CHECK COLUMN FOR WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("top_center").innerHTML === ""
+					) {
+						choice = "top_center";
+					} else if (
+						document.getElementById("top_center").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
+				case "bottom_right":
+					// CHECK ROW FOR WINS
+					if (
+						document.getElementById("bottom_left").innerHTML === "X" &&
+						document.getElementById("bottom_center").innerHTML === ""
+					) {
+						choice = "bottom_center";
+					} else if (
+						document.getElementById("bottom_center").innerHTML == "X" &&
+						document.getElementById("bottom_left").innerHTML === ""
+					) {
+						choice = "bottom_left";
+						// CHECK COLUMN FOR WINS
+					} else if (
+						document.getElementById("top_right").innerHTML === "X" &&
+						document.getElementById("middle_right").innerHTML === ""
+					) {
+						choice = "middle_right";
+					} else if (
+						document.getElementById("middle_right").innerHTML === "X" &&
+						document.getElementById("top_right").innerHTML === ""
+					) {
+						choice = "top_right";
+						// CHECKING FOR DIAGONAL WINS
+					} else if (
+						document.getElementById("middle_center").innerHTML === "X" &&
+						document.getElementById("top_left").innerHTML === ""
+					) {
+						choice = "top_left";
+					} else if (
+						document.getElementById("top_left").innerHTML === "X" &&
+						document.getElementById("middle_center").innerHTML === ""
+					) {
+						choice = "middle_center";
+					} else {
+						while (document.getElementById(choice).innerHTML != "") {
+							choice = ticTacDict[Math.floor(Math.random() * 9)].squareName;
+						}
+					}
+					break;
 			}
-			currentPlayer = playerOne;
+		}
+
+		document.getElementById(choice).innerHTML = "O";
+		turnCounter++;
+		lastAIChoice = choice;
+		checkForGameOver(choice, aiPlayer);
+		if (turnCounter >= 9 && isGameOver === false) {
+			gameOver("tie");
 		}
 	}
 };
