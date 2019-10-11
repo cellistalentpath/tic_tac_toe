@@ -35,15 +35,8 @@ class Board {
 }
 
 class Player {
-	constructor(name, points) {
+	constructor(name) {
 		this.name = name;
-		this.points = points;
-		this.addPoint = function() {
-			points = points + 1;
-		};
-	}
-	get playerPoints() {
-		return this.points;
 	}
 }
 
@@ -97,9 +90,9 @@ let lastAIChoice = "";
 let isAIThinking = false;
 
 const gameBoard = new Board();
-const playerOne = new Player("Player One", 0); //Will always have Xs
-const playerTwo = new Player("Player Two", 0); //Will always have Os
-const aiPlayer = new Player("The AI", 0);
+const playerOne = new Player("Player One"); //Will always have Xs
+const playerTwo = new Player("Player Two"); //Will always have Os
+const aiPlayer = new Player("The AI");
 
 let currentPlayer = playerOne;
 
@@ -128,7 +121,7 @@ function changeGameDifficulty() {
 	}
 }
 
-// Change background on hover execpt when the win is highlighted
+// Change background on hover execpt when the red win is highlighted
 function bgChange(id, color) {
 	if (document.getElementById(id).style.backgroundColor != "red") {
 		document.getElementById(id).style.background = color;
@@ -233,6 +226,7 @@ runAI = function(playerPickedSquare, prevAIChoice) {
 			} else if (turnCounter === 1) {
 				choice = "top_right";
 			} else if (
+				// Prevent certain win condition
 				turnCounter === 3 &&
 				playerPickedSquare === "bottom_left" &&
 				prevAIChoice === "top_right"
